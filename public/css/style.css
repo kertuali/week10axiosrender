@@ -11,10 +11,22 @@ html {
     color: #151515;
 }
 
+.container {
+    position: relative;
+    height: 100vh;
+}
+
+
 .movie-card {
     margin-top: 5rem;
     height: 800px;
     text-align: center;
+}
+
+.chat-container {
+    position: absolute;
+    top: 0;
+    right: 0;
 }
 
 .movie-title {
