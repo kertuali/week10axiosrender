@@ -7,6 +7,8 @@ app.set('view engine', 'ejs');
 
 app.use(express.static('public'));
 
+app.use(express.urlencoded({ extended: true }));
+
 app.get('/', (req, res) => {
     //const message = 'hello world';
     //res.render('index', {dataToRender: message});
@@ -41,6 +43,67 @@ app.get('/', (req, res) => {
     });
     
 });
+
+app.get('/search', (req, res) => {
+    res.render('search', {movieDetails:''});
+});
+
+app.post('/search', (req, res) => {
+    let userMovieTitle = req.body.movieTitle;
+
+    //console.log(userMovieTitle);
+
+    let movieUrl = `https://api.themoviedb.org/3/search/movie?query=${userMovieTitle}&api_key=21df2c343e7dde49f574347a9b252ec3`;
+    let genresUrl = 'https://api.themoviedb.org/3/genre/movie/list?&api_key=21df2c343e7dde49f574347a9b252ec3&language=en-US';
+
+    let endpoints = [movieUrl, genresUrl];
+
+    axios.all(endpoints.map((endpoint) => axios.get(endpoint)))
+    .then(axios.spread((movie, genres) => {
+
+
+        const [movieRaw] = movie.data.results;
+
+        //console.log(movie.data.results);
+
+        let movieGenreIds = movieRaw.genre_ids;
+        let movieGenres = genres.data.genres;
+        //console.log(movieGenres);
+
+        let movieGenresArray = [];
+
+        for(let i = 0; i < movieGenreIds.length; i++){// i++ - i = i + 1
+            for(let j = 0; j < movieGenres.length; j++) {
+                if(movieGenreIds[i] === movieGenres[j].id){
+                    movieGenresArray.push(movieGenres[j].name);
+                }
+            }
+        }
+
+       // console.log(movieGenresArray);
+
+       let genresToDisplay = '';
+       movieGenresArray.forEach(genre => {
+        genresToDisplay = genresToDisplay + `${genre}, `;
+       });
+
+       genresToDisplay = genresToDisplay.slice(0, -2) + '.';
+
+       //console.log(genresToDisplay);
+
+        let movieData = {
+            title: movieRaw.title,
+            year: new Date(movieRaw.release_date).getFullYear(),
+            genres: genresToDisplay,
+            overview: movieRaw.overview,
+            posterUrl: `https://image.tmdb.org/t/p/w500${movieRaw.poster_path}`
+        };
+    
+        res.render('search', {movieDetails: movieData});
+    
+    }));
+
+    });
 
 app.listen(process.env.PORT || 3000, () => {
     console.log('server is running on port 3000.');
